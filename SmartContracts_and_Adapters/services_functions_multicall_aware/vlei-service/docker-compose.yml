@@ -1,0 +1,73 @@
+version: "3.9"
+
+services:
+  vlei-public:
+    build:
+      context: .
+      dockerfile: Dockerfile.public
+    container_name: vlei-adapter-public
+    environment:
+      # --- app core ---
+      PORT: ${VLEI_PUBLIC_PORT:-18889}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:18889}
+      APIX_BASE: ${APIX_BASE:-}                # e.g. https://apix.example.com
+      # Outbound auth to APIX (choose one)
+      APIX_TOKEN: ${APIX_TOKEN:-}              # Bearer <token>
+      APIX_BASIC_USER: ${APIX_BASIC_USER:-}    # Basic user
+      APIX_BASIC_PASS: ${APIX_BASIC_PASS:-}    # Basic pass
+      SUBMIT_TIMEOUT_MS: ${SUBMIT_TIMEOUT_MS:-120000}
+
+      # --- structured logging knobs ---
+      LOG_LEVEL: ${LOG_LEVEL:-info}            # info | debug | warn | error
+      LOG_BODY: ${LOG_BODY:-0}                 # 1/true to include JSON body previews
+      LOG_PRETTY: ${LOG_PRETTY:-0}             # 1/true pretty JSON
+      LOG_SUMMARY_INTERVAL: ${LOG_SUMMARY_INTERVAL:-0}  # seconds; 0 disables summary
+      LOG_BODY_PREVIEW_LIMIT: ${LOG_BODY_PREVIEW_LIMIT:-800}
+
+    ports:
+      - "${VLEI_PUBLIC_PORT:-18889}:18889"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:18889/healthz || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"     # cap single log file size
+        max-file: "3"       # keep last 3 files
+        compress: "true"    # gzip rotated chunks
+
+  vlei-mock:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock
+    container_name: vlei-mock
+    environment:
+      # --- app core ---
+      PORT: ${VLEI_MOCK_PORT:-18890}
+      AUTO_VERIFY: ${AUTO_VERIFY:-true}
+      SUBMIT_TIMEOUT_MS: ${SUBMIT_TIMEOUT_MS:-120000}
+
+      # --- structured logging knobs ---
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_BODY: ${LOG_BODY:-0}
+      LOG_PRETTY: ${LOG_PRETTY:-0}
+      LOG_SUMMARY_INTERVAL: ${LOG_SUMMARY_INTERVAL:-0}
+      LOG_BODY_PREVIEW_LIMIT: ${LOG_BODY_PREVIEW_LIMIT:-800}
+
+    ports:
+      - "${VLEI_MOCK_PORT:-18890}:18890"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:18890/healthz || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"

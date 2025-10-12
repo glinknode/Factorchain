@@ -1,0 +1,41 @@
+# ---- build stage ----
+FROM node:18-alpine AS builder
+WORKDIR /app
+
+COPY package*.json ./
+
+# Install deps (ci if lock exists, else install)
+RUN if [ -f package-lock.json ]; then \
+      npm ci; \
+    else \
+      npm install --no-audit --no-fund; \
+    fi
+
+COPY tsconfig.json ./
+COPY mock-vlei-service.ts ./
+RUN npm run build
+
+# ---- runtime stage ----
+FROM node:18-alpine
+WORKDIR /app
+
+COPY --from=builder /app/dist ./dist
+COPY package*.json ./
+
+# Install prod deps (ci if lock exists, else install)
+RUN if [ -f package-lock.json ]; then \
+      npm ci --omit=dev; \
+    else \
+      npm install --omit=dev --no-audit --no-fund; \
+    fi \
+ && apk add --no-cache curl
+
+ENV NODE_ENV=production \
+    PORT=18890
+
+EXPOSE 18890
+
+HEALTHCHECK --interval=10s --timeout=3s --retries=10 \
+  CMD curl -fsS http://localhost:18890/healthz || exit 1
+
+CMD ["node", "dist/mock-vlei-service.js"]

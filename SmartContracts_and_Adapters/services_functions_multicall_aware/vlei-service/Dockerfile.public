@@ -1,0 +1,44 @@
+# ---- build stage ----
+FROM node:18-alpine AS builder
+WORKDIR /app
+
+# Copy manifests first for better layer caching
+COPY package*.json ./
+
+# Install deps (ci if lock exists, else install)
+RUN if [ -f package-lock.json ]; then \
+      npm ci; \
+    else \
+      npm install --no-audit --no-fund; \
+    fi
+
+# Compile TS → JS
+COPY tsconfig.json ./
+COPY vlei-adapter-public.ts ./
+RUN npm run build
+
+# ---- runtime stage ----
+FROM node:18-alpine
+WORKDIR /app
+
+# Copy compiled app + production deps only
+COPY --from=builder /app/dist ./dist
+COPY package*.json ./
+
+# Install prod deps (ci if lock exists, else install)
+RUN if [ -f package-lock.json ]; then \
+      npm ci --omit=dev; \
+    else \
+      npm install --omit=dev --no-audit --no-fund; \
+    fi \
+ && apk add --no-cache curl
+
+ENV NODE_ENV=production \
+    PORT=18889
+
+EXPOSE 18889
+
+HEALTHCHECK --interval=10s --timeout=3s --retries=10 \
+  CMD curl -fsS http://localhost:18889/healthz || exit 1
+
+CMD ["node", "dist/vlei-adapter-public.js"]

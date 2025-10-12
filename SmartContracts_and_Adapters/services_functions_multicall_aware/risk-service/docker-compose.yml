@@ -1,0 +1,37 @@
+version: "3.9"
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-env-logging: &default-log-env
+  LOG_LEVEL: "info"           # info | debug | warn | error
+  LOG_BODY: "0"               # 1 to include JSON body previews
+  LOG_PRETTY: "0"             # 1 for pretty-printed JSON logs
+  LOG_SUMMARY_INTERVAL: "30"  # seconds; 0 disables
+  LOG_BODY_PREVIEW_LIMIT: "800"
+
+services:
+  risk-public:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: risk-adapter-public:latest
+    container_name: risk-public
+    ports:
+      - "18888:18888"
+    environment:
+      <<: *default-log-env
+      PORT: "18888"
+      JSON_LIMIT: "256kb"
+      ALLOWED_ORIGINS: ""     # empty = allow all; or comma-separated origins
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:18888/healthz"]
+      interval: 20s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    logging: *default-logging

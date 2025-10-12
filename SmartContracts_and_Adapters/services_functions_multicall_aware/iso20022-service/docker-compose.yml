@@ -1,0 +1,39 @@
+version: "3.9"
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-env-logging: &default-log-env
+  LOG_LEVEL: "info"           # info | debug | warn | error
+  LOG_BODY: "0"               # 1 to include request body previews in logs
+  LOG_PRETTY: "0"             # 1 for pretty JSON logs (bigger)
+  LOG_SUMMARY_INTERVAL: "30"  # seconds; 0 disables periodic summary
+  LOG_BODY_PREVIEW_LIMIT: "800"
+
+services:
+  iso20022-public:
+    build:
+      context: .
+      dockerfile: Dockerfile        # uses the default Dockerfile in this folder
+    image: iso20022-adapter-public:latest
+    container_name: iso20022-public
+    ports:
+      - "18887:18887"               # host:container
+    environment:
+      <<: *default-log-env
+      PORT: "18887"                 # service listens on 18887
+      JSON_LIMIT: "1mb"
+      # Leave empty to allow all origins; or comma-separate origins:
+      # e.g. "https://app.example.com,https://staging.example.com"
+      ALLOWED_ORIGINS: ""
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:18887/healthz"]
+      interval: 20s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    logging: *default-logging

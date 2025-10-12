@@ -1,0 +1,22 @@
+{
+  "name": "vlei-adapters",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p .",
+    "start:public": "node dist/vlei-adapter-public.js",
+    "start:mock": "node dist/mock-vlei-service.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.9",
+    "typescript": "^5.4.5"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "iso20022-adapter-public",
+  "version": "1.0.0",
+  "description": "Public ISO20022 microservice (no auth) with structured logs for Chainlink Functions integration.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "fast-xml-parser": "^4.3.6"
+  },
+  "license": "MIT"
+}
