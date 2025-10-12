@@ -1,0 +1,174 @@
+name: factorchain_gleif_testsystem
+
+configs:
+  wan.json:
+    content: |
+      {
+        "dt": "2025-01-01T00:00:00.000000+00:00",
+        "wan": {
+          "dt": "2025-01-01T00:00:00.000000+00:00",
+          "curls": [
+            "tcp://wan:5632/",
+            "http://wan:5642/"
+          ]
+        }
+      }
+  wil.json:
+    content: |
+      {
+        "dt": "2025-01-01T00:00:00.000000+00:00",
+        "wil": {
+          "dt": "2025-01-01T00:00:00.000000+00:00",
+          "curls": [
+            "tcp://wil:5633/",
+            "http://wil:5643/"
+          ]
+        }
+      }
+  wes.json:
+    content: |
+      {
+        "dt": "2025-01-01T00:00:00.000000+00:00",
+        "wes": {
+          "dt": "2025-01-01T00:00:00.000000+00:00",
+          "curls": [
+            "tcp://wes:5634/",
+            "http://wes:5644/"
+          ]
+        }
+      }
+
+services:
+  keria:
+    image: gleif/keria:0.3.0
+    entrypoint: ["keria","start","--name","keria","--loglevel","DEBUG"]
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONIOENCODING: "UTF-8"
+      KERI_AGENT_CORS: "True"
+         ports:
+      - "3901:3901"   # admin
+      - "3902:3902"   # http
+      - "3903:3903"   # boot
+    volumes:
+      - keria-var:/usr/local/var/keri   # <-- persist keystore/db/registries
+    networks:
+      vlei-net:
+        aliases: [keria]
+
+  wan:
+    image: weboftrust/keri:1.2.6
+    command: ["witness","start","--name","wan","-a","wan","--tcp","5632","--http","5643"]
+    environment:
+      KERI_LOG_LEVEL: DEBUG
+      KERI_WITNESS_PORT: 5642
+      KERI_WITNESS_TCP_PORT: 5632
+      PYTHONUNBUFFERED: "1"
+      PYTHONIOENCODING: "UTF-8"
+    ports:
+      - "5642:5642"
+      - "5632:5632"
+    volumes:
+      - witness-wan-data:/usr/local/var/keri
+    networks:
+      vlei-net:
+        aliases: [wan]
+    stop_grace_period: "0"
+    configs:
+      - source: wan.json
+        target: /keripy/scripts/keri/cf/main/wan.json
+
+  wil:
+    image: weboftrust/keri:1.2.6
+    command: ["witness","start","--name","wil","-a","wil","--tcp","5633","--http","5643"]
+    environment:
+      KERI_LOG_LEVEL: DEBUG
+      KERI_WITNESS_PORT: 5643
+      KERI_WITNESS_TCP_PORT: 5633
+      PYTHONUNBUFFERED: "1"
+      PYTHONIOENCODING: "UTF-8"
+    ports:
+      - "5643:5643"
+      - "5633:5633"
+    networks:
+         vlei-net:
+        aliases: [wil]
+    volumes:
+      - witness-wil-data:/usr/local/var/keri
+    stop_grace_period: "0"
+    configs:
+      - source: wil.json
+        target: /keripy/scripts/keri/cf/main/wil.json
+
+  wes:
+    image: weboftrust/keri:1.2.6
+    command: ["witness","start","--name","wes","-a","wes","--tcp","5634","--http","5644"]
+    environment:
+      KERI_LOG_LEVEL: DEBUG
+      KERI_WITNESS_PORT: 5644
+      KERI_WITNESS_TCP_PORT: 5634
+      PYTHONUNBUFFERED: "1"
+      PYTHONIOENCODING: "UTF-8"
+    ports:
+      - "5644:5644"
+      - "5634:5634"
+    networks:
+      vlei-net:
+        aliases: [wes]
+    volumes:
+      - witness-wes-data:/usr/local/var/keri
+    stop_grace_period: "0"
+    configs:
+      - source: wes.json
+        target: /keripy/scripts/keri/cf/main/wes.json
+
+  onechain:
+    build: ./onechain
+    image: benefica_gleif_testnet-onechain
+    environment:
+      STATELESS: "true"
+      PASSCODE: "0123456789abcdefghijk"
+
+      # keria endpoints
+      KERIA_HTTP: "http://keria:3902"
+      KERIA_BOOT: "http://keria:3903/boot"
+      KERIA_ADMIN: "http://keria:3901"
+           SCHEMA_TIMEOUT: "10"
+      HTTP_CLIENT_TIMEOUT: "15"
+    ports:
+      - "18882:18882"
+    networks:
+      vlei-net:
+        aliases: [onechain]
+    depends_on:
+      - wan
+      - wil
+      - wes
+      - keria
+      - schema
+
+  schema:
+    image: gleif/vlei:1.0.0
+y    networks:
+      vlei-net:
+        aliases: [schema]
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONIOENCODING: "UTF-8"
+      PYTHONWARNINGS: "ignore::SyntaxWarning"
+      LOG_LEVEL: "debug"
+    command: ["vLEI-server","-s","/vLEI/schema","-c","/vLEI/credentials","-o","/vLEI/oobis"]
+    restart: unless-stopped
+
+networks:
+  vlei-net:
+    driver: bridge
+#    ipam:
+#      config:
+#        - subnet: 172.28.0.0/16
+
+volumes:
+  witness-wan-data:
+  witness-wil-data:
+  witness-wes-data:
+  keria-var:
