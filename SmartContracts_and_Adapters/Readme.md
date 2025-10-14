@@ -10,12 +10,12 @@
 
 ## Contract Addresses (Real, Sepolia)
 
-- **PartyRegistry (Registry):** `0x09Cda949b11Bb54073bFE079adc2bA3D4B048F0b`
-- **InvoiceNFT:** `0xa8F621EAB45E0185835D4D37A3626EFD66891518`
-- **PaymentRouter:** `0x45090c93299B9309Be89A725ff37990F4C4c7757`
-- **InvoiceMarketplace:** `0x044CabAaf879A1DC61B78E6B568e3D86b6056af1`
-- **ISOMessageRouter (ISO):** `0x34194eB355E327BF7e74A7a84EC654Af4016f5e1`
-- **RiskOracleRouter (Risk):** `0x1efD4E72d146eB29c5E0549C01Fa2506F16594DE`
+- **PartyRegistry (Registry):** `0x4Ea75d52F068259Bc0B2A2E926D169B7296Bb392`
+- **InvoiceNFT:** `0x04a0B93BEa3c5391F1Ca767D1B2c1FE67b88fc8F`
+- **PaymentRouter:** `0x28582D9e01eb10E42F2BAFB01AC9f8CbCAa1566e`
+- **InvoiceMarketplace:** `0x33e2c4D6b84A20DcA062e417bA69C11fc8aE25b4`
+- **ISOMessageRouter (ISO):** `0x4C7c573b5f7D45Ad9D1164e5c988Aacd9c117101`
+- **RiskOracleRouter (Risk):** `0x25b1564b9b577cDBE40882BEf9c01f65eaA8356e`
 - **PaymentSettlementAutomation (optional):** `0x530f14ade491c8158099c40f9a2bfcf73d405fe6`
 
 ---
