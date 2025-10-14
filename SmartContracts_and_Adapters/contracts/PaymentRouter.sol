@@ -28,6 +28,13 @@ contract PaymentRouter is FunctionsClient {
   uint256 private _locked;
   modifier nonReentrant(){ require(_locked==0,"reentrancy"); _locked=1; _; _locked=0; }
 
+  // --- Token owner auth (for per-token settings) ---
+  modifier onlyTokenOwner(uint256 tokenId) {
+    require(msg.sender == _ownerOfToken(tokenId), "only token owner");
+    _;
+  }
+
+
   // ---- Core refs ----
   IInvoiceNFT public immutable invoiceNFT;
   IISOMessageRouter public isoRouter; // settable
@@ -101,13 +108,13 @@ contract PaymentRouter is FunctionsClient {
   function setAssetWhitelist(address token, bool allowed) external onlyOwner {
     assetWhitelist[token] = allowed; emit AssetWhitelistSet(token, allowed);
   }
-  function setSettlementAsset(uint256 tokenId, address token) external onlyOwner {
+  function setSettlementAsset(uint256 tokenId, address token) external onlyTokenOwner(tokenId) {
     settlementAsset[tokenId] = token; emit SettlementAssetSet(tokenId, token);
   }
-  function setPayoutIBAN(uint256 tokenId, string calldata iban) external onlyOwner {
+  function setPayoutIBAN(uint256 tokenId, string calldata iban) external onlyTokenOwner(tokenId) {
     _payTo[tokenId].iban = iban; emit PayToUpdated(tokenId, _payTo[tokenId].wallet, iban);
   }
-  function setPayoutWallet(uint256 tokenId, address newWallet) external onlyOwner {
+  function setPayoutWallet(uint256 tokenId, address newWallet) external onlyTokenOwner(tokenId) {
     _payTo[tokenId].wallet = newWallet; emit PayToUpdated(tokenId, newWallet, _payTo[tokenId].iban);
   }
 
@@ -337,4 +344,14 @@ contract PaymentRouter is FunctionsClient {
     bytes memory b=new bytes(len); uint256 k=len; while(v!=0){ k--; b[k]=bytes1(uint8(48 + (v%10))); v/=10; }
     return string(b);
   }
+   // Helper to read ERC-721 owner without changing IInvoiceNFT
+  function _ownerOfToken(uint256 tokenId) internal view returns (address) {
+    (bool ok, bytes memory data) = address(invoiceNFT).staticcall(
+      abi.encodeWithSignature("ownerOf(uint256)", tokenId)
+    );
+    require(ok && data.length >= 32, "ownerOf");
+    return abi.decode(data, (address));
+  }
 }
+
+ 
