@@ -183,7 +183,8 @@ contract InvoiceMarketplace is FunctionsClient {
 
     // Transfer ownership → new payment receiver
     inv.safeTransferFrom(seller, msg.sender, tokenId);
-
+    policy.updatePayTo(tokenId,msg.sender);
+    
     string memory remRef = string(abi.encodePacked("OWNER-CHANGED-", _uToString(tokenId)));
     emit PaymentReceiverUpdated(tokenId, seller, msg.sender, "ERC20", remRef);
 
