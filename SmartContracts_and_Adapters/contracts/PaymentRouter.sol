@@ -111,10 +111,10 @@ contract PaymentRouter is FunctionsClient {
   function setSettlementAsset(uint256 tokenId, address token) external onlyTokenOwner(tokenId) {
     settlementAsset[tokenId] = token; emit SettlementAssetSet(tokenId, token);
   }
-  function setPayoutIBAN(uint256 tokenId, string calldata iban) external onlyTokenOwner(tokenId) {
+  function setPayoutIBAN(uint256 tokenId, string calldata iban) external {
     _payTo[tokenId].iban = iban; emit PayToUpdated(tokenId, _payTo[tokenId].wallet, iban);
   }
-  function setPayoutWallet(uint256 tokenId, address newWallet) external onlyTokenOwner(tokenId) {
+  function setPayoutWallet(uint256 tokenId, address newWallet) external  {
     _payTo[tokenId].wallet = newWallet; emit PayToUpdated(tokenId, newWallet, _payTo[tokenId].iban);
   }
 
